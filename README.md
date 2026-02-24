@@ -14,7 +14,7 @@ Click the menubar item to see project names grouped by state.
 ## Install
 
 ```bash
-git clone https://github.com/AskIsk/claude-monitor.git
+git clone https://github.com/Iskrata/claude-monitor.git
 cd claude-monitor
 bash install.sh
 ```
