@@ -2,6 +2,8 @@
 
 Lightweight macOS menubar app showing Claude Code session status.
 
+![menubar](screenshot.png)
+
 **Display:** `active⚡waiting` — active sessions (CPU > 3%) and sessions waiting for your approval.
 
 ## How it works
