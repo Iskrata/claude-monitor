@@ -85,6 +85,17 @@ func waitingLabel(_ type: String) -> String {
     }
 }
 
+let configDir = NSString(string: "~/.claude/monitor").expandingTildeInPath
+let emojiPresets = ["\u{26A1}", "\u{1F525}", "\u{1F916}", "\u{1F9E0}", "\u{2699}\u{FE0F}", "\u{1F4A1}", "\u{1F440}", "\u{1F3AF}"]
+
+func loadEmoji() -> String {
+    (try? String(contentsOfFile: "\(configDir)/emoji", encoding: .utf8))?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "\u{26A1}"
+}
+
+func saveEmoji(_ emoji: String) {
+    try? emoji.write(toFile: "\(configDir)/emoji", atomically: true, encoding: .utf8)
+}
+
 class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem!
     var timer: Timer?
@@ -109,7 +120,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
         prevWaitingCount = waiting.count
 
-        statusItem.button?.title = "\(active.count)\u{26A1}\(waiting.count)"
+        let emoji = loadEmoji()
+        statusItem.button?.title = "\(active.count)\(emoji)\(waiting.count)"
 
         let menu = NSMenu()
 
@@ -137,6 +149,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         menu.addItem(NSMenuItem.separator())
+
+        let emojiItem = NSMenuItem(title: "Emoji", action: nil, keyEquivalent: "")
+        let emojiMenu = NSMenu()
+        let current = loadEmoji()
+        for e in emojiPresets {
+            let item = NSMenuItem(title: e, action: #selector(setEmoji(_:)), keyEquivalent: "")
+            item.target = self
+            if e == current { item.state = .on }
+            emojiMenu.addItem(item)
+        }
+        emojiItem.submenu = emojiMenu
+        menu.addItem(emojiItem)
+
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         statusItem.menu = menu
     }
@@ -157,6 +182,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func focusSession(_ sender: NSMenuItem) {
         guard sender.tag > 0 else { return }
         activateTerminal(forPID: sender.tag)
+    }
+
+    @objc func setEmoji(_ sender: NSMenuItem) {
+        saveEmoji(sender.title)
+        refresh()
     }
 }
 
