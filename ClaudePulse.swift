@@ -1,4 +1,5 @@
 import AppKit
+import IOKit.pwr_mgt
 
 struct RunningProcess {
     let pid: Int
@@ -96,10 +97,32 @@ func saveEmoji(_ emoji: String) {
     try? emoji.write(toFile: "\(configDir)/emoji", atomically: true, encoding: .utf8)
 }
 
+class SleepPreventer {
+    private var assertionID: IOPMAssertionID = 0
+    private var active = false
+
+    func update(hasActiveAgents: Bool) {
+        if hasActiveAgents && !active {
+            let reason = "Claude Code agent is working" as CFString
+            let success = IOPMAssertionCreateWithName(
+                kIOPMAssertionTypeNoIdleSleep as CFString,
+                IOPMAssertionLevel(kIOPMAssertionLevelOn),
+                reason,
+                &assertionID
+            )
+            active = success == kIOReturnSuccess
+        } else if !hasActiveAgents && active {
+            IOPMAssertionRelease(assertionID)
+            active = false
+        }
+    }
+}
+
 class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem!
     var timer: Timer?
     var prevWaitingCount = 0
+    let sleepPreventer = SleepPreventer()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -113,6 +136,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let processes = getRunningProcesses()
         let waiting = getWaitingInfos()
         let active = processes.filter { $0.cpu > 3.0 }
+
+        sleepPreventer.update(hasActiveAgents: !active.isEmpty)
 
         if prevWaitingCount == 0 && !waiting.isEmpty {
             NSSound(named: "Ping")?.play()

@@ -4,14 +4,14 @@ set -e
 INSTALL_DIR="$HOME/bin"
 HOOK_DIR="$HOME/.claude/monitor"
 PLIST_DIR="$HOME/Library/LaunchAgents"
-LABEL="com.user.claudemonitor"
+LABEL="com.user.claudepulse"
 HOOK_PATH="$HOOK_DIR/hook.sh"
 
 mkdir -p "$INSTALL_DIR" "$HOOK_DIR/waiting" "$PLIST_DIR"
 
 # Compile
 echo "Compiling..."
-swiftc -O -o "$INSTALL_DIR/ClaudeMonitor" "$(dirname "$0")/ClaudeMonitor.swift"
+swiftc -O -o "$INSTALL_DIR/ClaudePulse" "$(dirname "$0")/ClaudePulse.swift"
 
 # Install hook script
 cp "$(dirname "$0")/hook.sh" "$HOOK_PATH"
@@ -26,7 +26,7 @@ cat > "$PLIST_DIR/$LABEL.plist" <<EOF
     <key>Label</key>
     <string>$LABEL</string>
     <key>Program</key>
-    <string>$INSTALL_DIR/ClaudeMonitor</string>
+    <string>$INSTALL_DIR/ClaudePulse</string>
     <key>RunAtLoad</key>
     <true/>
     <key>LimitLoadToSessionType</key>
@@ -42,7 +42,7 @@ launchctl load "$PLIST_DIR/$LABEL.plist"
 # Print hook config to add to ~/.claude/settings.json
 cat <<MSG
 
-ClaudeMonitor installed and running.
+ClaudePulse installed and running.
 
 Add these hooks to ~/.claude/settings.json:
 
